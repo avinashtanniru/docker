@@ -1,0 +1,43 @@
+##########################
+###   Docker Commands  ###
+##########################
+
+setenforce 0 // Disabling SE Linux Temp for Mounting Docker
+
+docker ps
+docker ps -a
+docker images 
+docker rmi 83952e35ac0e
+docker images
+docker build -t avinash/laravel:v2 .
+docker run --name blog -it -d -v /var/www/html/:/var/www/html/ -p 8080:80 -p 2222:22 avinash/laravel:v2
+docker start blog
+docker stop blog
+docker exec -it blog /bin/bash
+docker run -d -it --name smolive1 -p 80:80 -p 443:443 -v /var/www/html/:/var/www/html/ --entrypoint /home/start.sh avinash/smolive
+
+
+echo "systemctl hibernate" | at now +1 min
+##################
+#Export Container#
+##################
+docker export avinash_smo | gzip > /home/ventanni/Avinash/oldtp/smolive_container.tar.gz
+gzcat /home/ventanni/Avinash/oldtp/smolive_container.tar.gz | docker import - smolive
+########################
+#Commit to Create Image#
+########################
+docker commit -a Avinash avinash_smo smolive/avinash
+############
+#Save Image#
+############
+docker save -o smolive_image.tar smolive/avinash
+docker load -i smolive_image.tar
+
+
+##########################
+#  Upgrade Centsos php   #
+##########################
+yum install epel-release
+rpm -Uvh http://rpms.remirepo.net/enterprise/remi-release-7.rpm
+yum remove php*
+yum install --enablerepo=remi-php72 php php-mcrypt php-cli php-gd php-curl php-mysql php-ldap php-zip php-fileinfo

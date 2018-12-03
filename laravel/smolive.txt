@@ -1,0 +1,4 @@
+yum install php-zip
+yum install zip
+yum install zlib zip php-zip
+
