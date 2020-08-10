@@ -1,0 +1,65 @@
+map $remote_addr $proxy_forwarded_elem {
+    # IPv4 addresses can be sent as-is
+    ~^[0-9.]+$          "for=$remote_addr";
+
+    # IPv6 addresses need to be bracketed and quoted
+    ~^[0-9A-Fa-f:.]+$   "for=\"[$remote_addr]\"";
+
+    # Unix domain socket names cannot be represented in RFC 7239 syntax
+    default             "for=unknown";
+}
+
+map $http_forwarded $proxy_add_forwarded {
+    # If the incoming Forwarded header is syntactically valid, append to it
+    "~^(,[ \\t]*)*([!#$%&'*+.^_`|~0-9A-Za-z-]+=([!#$%&'*+.^_`|~0-9A-Za-z-]+|\"([\\t \\x21\\x23-\\x5B\\x5D-\\x7E\\x80-\\xFF]|\\\\[\\t \\x21-\\x7E\\x80-\\xFF])*\"))?(;([!#$%&'*+.^_`|~0-9A-Za-z-]+=([!#$%&'*+.^_`|~0-9A-Za-z-]+|\"([\\t \\x21\\x23-\\x5B\\x5D-\\x7E\\x80-\\xFF]|\\\\[\\t \\x21-\\x7E\\x80-\\xFF])*\"))?)*([ \\t]*,([ \\t]*([!#$%&'*+.^_`|~0-9A-Za-z-]+=([!#$%&'*+.^_`|~0-9A-Za-z-]+|\"([\\t \\x21\\x23-\\x5B\\x5D-\\x7E\\x80-\\xFF]|\\\\[\\t \\x21-\\x7E\\x80-\\xFF])*\"))?(;([!#$%&'*+.^_`|~0-9A-Za-z-]+=([!#$%&'*+.^_`|~0-9A-Za-z-]+|\"([\\t \\x21\\x23-\\x5B\\x5D-\\x7E\\x80-\\xFF]|\\\\[\\t \\x21-\\x7E\\x80-\\xFF])*\"))?)*)?)*$" "$http_forwarded, $proxy_forwarded_elem";
+
+    # Otherwise, replace it
+    default "$proxy_forwarded_elem";
+}
+server {
+        # listen 80 default_server;
+	# listen [::]:80 default_server;
+
+	# SSL configuration
+	#
+	listen 443 ssl default_server;
+	# listen [::]:443 ssl default_server;
+
+	gzip on;
+        gzip_min_length  1100;
+        gzip_buffers  4 32k;
+        gzip_types    text/plain application/x-javascript text/xml text/css;
+        gzip_vary on;
+
+	server_name _;
+	underscores_in_headers on;
+        ssl_certificate /etc/nginx/ssl/bundle.crt;
+        ssl_certificate_key /etc/nginx/ssl/server.key;
+
+	error_page 500 502 503 504 404 /50x.html;
+        location = /50x.html {
+                root /var/www/html;
+                internal;
+        }
+
+	location / {
+		# First attempt to serve request as file, then
+		# as directory, then fall back to displaying a 404.
+		proxy_pass http://backend_hosts;
+		proxy_set_header HOST $host;
+                proxy_set_header X-Forwarded-Proto $scheme;
+                proxy_set_header X-Forwarded-Scheme $scheme;
+                proxy_set_header X-Real-IP $remote_addr;
+                proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+		proxy_pass_request_headers      on;
+		#proxy_hide_header Content-Security-Policy;
+		more_set_headers "Content-Security-Policy: default-src 'none'; ";
+                more_set_headers "Content-Security-Policy: script-src 'self' 'unsafe-eval' 'unsafe-inline'; ";
+                more_set_headers "Content-Security-Policy: vstyle-src 'self'    'unsafe-inline'; ";
+                more_set_headers "Content-Security-Policy: img-src 'self' data:; font-src 'self'    'unsafe-inline'; ";
+                more_set_headers "Content-Security-Policy: connect-src 'self';  form-action 'self'; ";
+
+	}
+
+}
+include vhost/vhost.conf;

@@ -1,0 +1,9 @@
+version: '3'
+services:
+  lb443:
+    image: "oracleslb:latest"
+    ports:
+      - "443:443"
+    volumes:
+      - /home/onboard/cert:/opt/nginx/ssl
+      - /home/onboard/vhost:/opt/nginx/vhost

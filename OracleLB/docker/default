@@ -1,0 +1,34 @@
+server {
+        # listen 80 default_server;
+	# listen [::]:80 default_server;
+
+	# SSL configuration
+	#
+	listen 443 ssl default_server;
+	# listen [::]:443 ssl default_server;
+
+	server_name _;
+        ssl_certificate /etc/nginx/ssl/server.pem;
+        ssl_certificate_key /etc/nginx/ssl/server.key;
+
+	error_page 500 502 503 504 404 /50x.html;
+        location = /50x.html {
+                root /var/www/html;
+                internal;
+        }
+
+	location / {
+		# First attempt to serve request as file, then
+		# as directory, then fall back to displaying a 404.
+		proxy_set_header 'X-Forwarded-Proto' 'https';
+                proxy_set_header 'X-Forwarded-Scheme' 'https';
+#		proxy_pass_header Server;
+		proxy_pass http://backend_hosts;
+	}
+
+}
+upstream backend_hosts {
+    server sca00lcv.us.oracle.com:8080;
+    server den00tkq.us.oracle.com:8080;
+#    server host3.example.com;
+}

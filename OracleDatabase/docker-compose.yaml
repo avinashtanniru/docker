@@ -1,0 +1,18 @@
+version: '3'
+
+services:
+  oracle_12201:
+    image: oracle/database:12.2.0.1-ee
+    environment:
+      ORACLE_SID: 'simphony'
+      ORACLE_PWD: 'Hyderabad$$123'
+      ORACLE_PDB: 'DOCKER'
+    ports:
+      - "1521:1521"
+#      - "5500:5500"
+    volumes:
+      - /home/opc/12cr2db:/opt/oracle/oradata
+#      - ./scripts:/opt/oracle/scripts/startup
+
+#volumes:
+#  oracle_sim_12201: /home/opc/12cr2db
